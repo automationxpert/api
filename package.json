@@ -8,7 +8,7 @@
       "start": "netlify dev"
     },
     "dependencies": {
-      "node-fetch": "^3.3.0"
+      "axios": "^1.5.0"
     },
     "author": "utomation xpert",
     "license": "MIT"
