@@ -1,0 +1,16 @@
+{
+    "name": "netlify-functions",
+    "version": "1.0.0",
+    "description": "Netlify Functions for webhook handling and forwarding",
+    "main": "functions/webhook.js",
+    "scripts": {
+      "build": "echo 'No build step required'",
+      "start": "netlify dev"
+    },
+    "dependencies": {
+      "node-fetch": "^3.3.0"
+    },
+    "author": "utomation xpert",
+    "license": "MIT"
+  }
+  
