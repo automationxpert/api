@@ -50,24 +50,29 @@ jobs:
               id: extract
               shell: bash
               run: |
-                # Capture raw body
+                # Capture raw body (maintaining newlines)
                 BODY="${{ github.event.comment.body }}"
                 CREATED_AT="${{ github.event.comment.created_at }}"
-                
-                # 1. Extract Email: Grabs content inside the last set of parentheses
-                EMAIL=$(echo "$BODY" | sed -n 's/.*(\([^)]*\)).*/\1/p')
-                
-                # 2. Extract Name: Looks between "From:" and "("
-                NAME=$(echo "$BODY" | sed -n 's/.*From:[[:space:]]*\([^(]*\)(.*/\1/p' | tr -d '*' | xargs)
-                
-                # 3. Extract Message: Grabs everything after "Message:"
-                # We use a broader match and strip leading/trailing asterisks
-                MSG=$(echo "$BODY" | sed -n 's/.*Message:[[:space:]]*\(.*\)/\1/p' | sed 's/\*\*//g' | xargs)
-                
-                # 4. Sanitization: Replace commas with semicolons
+
+                # 1. Extract Name: Look for text between Name: and Email:
+                NAME=$(echo "$BODY" | sed -n 's/.*Name:\(.*\)**Email:.*/\1/p' | tr -d '*' | xargs)
+
+                # 2. Extract Email: Grabs content inside the parentheses
+                EMAIL=$(echo "$BODY" | sed -n 's/.*(\(.*\)).*/\1/p' | xargs)
+
+                # 3. Extract Message: Look for the line AFTER **Message:**
+                # We grab the line immediately following the pattern and clean it
+                # MSG=$(echo "$BODY" | grep -A 1 "Message:" | tail -n 1 | sed 's/\*\*//g' | xargs)
+                MSG=$(echo "$BODY" | sed -n '/\*\*Message:\*\*/,$p' | tail -n +2 | sed 's/\*\*//g')
+
+
+                # 4. Fallback: If Message is still empty, set a default
+                if [ -z "$MSG" ]; then MSG="No message content"; fi
+
+                # 5. Sanitization: Replace commas with semicolons for CSV safety
                 SAFE_NAME=$(echo "$NAME" | tr ',' ';')
                 SAFE_MSG=$(echo "$MSG" | tr ',' ';')
-      
+
                 echo "date=$CREATED_AT" >> $GITHUB_OUTPUT
                 echo "email=$EMAIL" >> $GITHUB_OUTPUT
                 echo "name=$SAFE_NAME" >> $GITHUB_OUTPUT
