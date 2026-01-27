@@ -16,35 +16,75 @@ jobs:
             - name: Checkout Repository
               uses: actions/checkout@v4
 
+            # - name: Extract Comment Data
+            #   id: extract
+            #   shell: bash
+            #   run: |
+            #       # The body of the comment contains the form data
+            #       BODY="${{ github.event.comment.body }}"
+            #       CREATED_AT="${{ github.event.comment.created_at }}"
+
+            #       # Use grep/sed to extract fields if your Netlify function formats them like "Email: test@example.com"
+            #       # Otherwise, this grabs the first email-like string found in the body
+            #       EMAIL=$(echo "$BODY" | grep -E -o "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z|]{2,}\b" | head -n 1)
+
+            #       # Clean the body for CSV (remove newlines and commas)
+            #       CLEAN_BODY=$(echo "$BODY" | tr '\n' ' ' | tr ',' ';')
+
+            #       echo "date=$CREATED_AT" >> $GITHUB_OUTPUT
+            #       echo "email=$EMAIL" >> $GITHUB_OUTPUT
+            #       echo "content=$CLEAN_BODY" >> $GITHUB_OUTPUT
+
+            # - name: Update CSV File
+            #   run: |
+            #       FILE="data/submissions.csv"
+            #       mkdir -p data
+
+            #       if [ ! -f "$FILE" ]; then
+            #         echo "Date,Email,Content" > "$FILE"
+            #       fi
+
+            #       echo "${{ steps.extract.outputs.date }},${{ steps.extract.outputs.email }},${{ steps.extract.outputs.content }}" >> "$FILE"
+
             - name: Extract Comment Data
               id: extract
               shell: bash
               run: |
-                  # The body of the comment contains the form data
-                  BODY="${{ github.event.comment.body }}"
-                  CREATED_AT="${{ github.event.comment.created_at }}"
-
-                  # Use grep/sed to extract fields if your Netlify function formats them like "Email: test@example.com"
-                  # Otherwise, this grabs the first email-like string found in the body
-                  EMAIL=$(echo "$BODY" | grep -E -o "\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z|]{2,}\b" | head -n 1)
-
-                  # Clean the body for CSV (remove newlines and commas)
-                  CLEAN_BODY=$(echo "$BODY" | tr '\n' ' ' | tr ',' ';')
-
-                  echo "date=$CREATED_AT" >> $GITHUB_OUTPUT
-                  echo "email=$EMAIL" >> $GITHUB_OUTPUT
-                  echo "content=$CLEAN_BODY" >> $GITHUB_OUTPUT
-
+                # Capture the full raw body
+                BODY="${{ github.event.comment.body }}"
+                CREATED_AT="${{ github.event.comment.created_at }}"
+                
+                # 1. Extract Email: Grabs the string inside the parentheses
+                EMAIL=$(echo "$BODY" | sed -n 's/.*(\(.*\)).*/\1/p')
+                
+                # 2. Extract Name: Grabs text between "From:" and the opening parenthesis
+                # We remove asterisks and trim whitespace
+                NAME=$(echo "$BODY" | sed -n 's/.*From:\(.*\)(.*/\1/p' | tr -d '*' | xargs)
+                
+                # 3. Extract Message: Grabs everything after "Message:"
+                MSG=$(echo "$BODY" | sed -n 's/.*Message:\(.*\)/\1/p' | xargs)
+                
+                # 4. Sanitization: Replace commas with semicolons to prevent CSV alignment issues
+                SAFE_NAME=$(echo "$NAME" | tr ',' ';')
+                SAFE_MSG=$(echo "$MSG" | tr ',' ';')
+      
+                echo "date=$CREATED_AT" >> $GITHUB_OUTPUT
+                echo "email=$EMAIL" >> $GITHUB_OUTPUT
+                echo "name=$SAFE_NAME" >> $GITHUB_OUTPUT
+                echo "msg=$SAFE_MSG" >> $GITHUB_OUTPUT
+      
             - name: Update CSV File
               run: |
-                  FILE="data/submissions.csv"
-                  mkdir -p data
-
-                  if [ ! -f "$FILE" ]; then
-                    echo "Date,Email,Content" > "$FILE"
-                  fi
-
-                  echo "${{ steps.extract.outputs.date }},${{ steps.extract.outputs.email }},${{ steps.extract.outputs.content }}" >> "$FILE"
+                FILE="data/submissions.csv"
+                mkdir -p data
+                
+                # Create header if file is new
+                if [ ! -f "$FILE" ]; then
+                  echo "Date,Email,Name,Message" > "$FILE"
+                fi
+                
+                # Append formatted row
+                echo "${{ steps.extract.outputs.date }},${{ steps.extract.outputs.email }},${{ steps.extract.outputs.name }},${{ steps.extract.outputs.msg }}" >> "$FILE"            
 
             - name: Commit and Push Changes
               run: |
