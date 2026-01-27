@@ -50,21 +50,21 @@ jobs:
               id: extract
               shell: bash
               run: |
-                # Capture the full raw body
+                # Capture raw body
                 BODY="${{ github.event.comment.body }}"
                 CREATED_AT="${{ github.event.comment.created_at }}"
                 
-                # 1. Extract Email: Grabs the string inside the parentheses
-                EMAIL=$(echo "$BODY" | sed -n 's/.*(\(.*\)).*/\1/p')
+                # 1. Extract Email: Grabs content inside the last set of parentheses
+                EMAIL=$(echo "$BODY" | sed -n 's/.*(\([^)]*\)).*/\1/p')
                 
-                # 2. Extract Name: Grabs text between "From:" and the opening parenthesis
-                # We remove asterisks and trim whitespace
-                NAME=$(echo "$BODY" | sed -n 's/.*From:\(.*\)(.*/\1/p' | tr -d '*' | xargs)
+                # 2. Extract Name: Looks between "From:" and "("
+                NAME=$(echo "$BODY" | sed -n 's/.*From:[[:space:]]*\([^(]*\)(.*/\1/p' | tr -d '*' | xargs)
                 
                 # 3. Extract Message: Grabs everything after "Message:"
-                MSG=$(echo "$BODY" | sed -n 's/.*Message:\(.*\)/\1/p' | xargs)
+                # We use a broader match and strip leading/trailing asterisks
+                MSG=$(echo "$BODY" | sed -n 's/.*Message:[[:space:]]*\(.*\)/\1/p' | sed 's/\*\*//g' | xargs)
                 
-                # 4. Sanitization: Replace commas with semicolons to prevent CSV alignment issues
+                # 4. Sanitization: Replace commas with semicolons
                 SAFE_NAME=$(echo "$NAME" | tr ',' ';')
                 SAFE_MSG=$(echo "$MSG" | tr ',' ';')
       
