@@ -1,6 +1,8 @@
 name: "Sync Submissions to CSV"
 
 on:
+    workflow_dispatch:
+
     discussion_comment:
         types: [created]
 
