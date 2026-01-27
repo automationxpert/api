@@ -1,4 +1,4 @@
-Date,Email,Name,Message
-2026-01-27T10:12:10Z,doe@gmail.com,John,**
-2026-01-27T10:19:40Z,john@google.com,Jane,
-2026-01-27T16:09:59Z,blake_82@msn.com,blake,Now i don't need to pay for the contact page pro subscription! Thanks mate for solving 50% of problems. That too for free!
+Date,Email,Name,Type,Message
+2026-01-27T10:12:10Z,doe@gmail.com,John,feedback,You're awesome
+2026-01-27T10:19:40Z,john@google.com,Jane,feedback,Great Product
+2026-01-27T16:09:59Z,blake_82@msn.com,blake,feedback,Now i don't need to pay for the contact page pro subscription! Thanks mate for solving 50% of problems. That too for free!
