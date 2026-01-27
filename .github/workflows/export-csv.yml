@@ -75,7 +75,7 @@ jobs:
       
             - name: Update CSV File
               run: |
-                FILE="data/submissions.csv"
+                FILE="data/contact-form-submissions.csv"
                 mkdir -p data
                 
                 # Create header if file is new
@@ -88,8 +88,9 @@ jobs:
 
             - name: Commit and Push Changes
               run: |
+                  FILE="data/contact-form-submissions.csv"
                   git config --global user.name "GitConnect Bot"
                   git config --global user.email "bot@automationexpert.us.kg"
-                  git add data/submissions.csv
+                  git add $FILE
                   # Prevent error if nothing changed
                   git diff --quiet && git diff --staged --quiet || (git commit -m "auto: log entry from ${{ steps.extract.outputs.email }}" && git push)
